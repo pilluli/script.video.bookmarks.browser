@@ -43,7 +43,7 @@ class Main:
     __language__   = __settings__.getLocalizedString
 
     def _seconds_to_string( self, seconds, tseconds, format ):
-        str = ''
+        timestr = ''
         hh = mm = ss = 0
         try:
           time = float(tseconds) - float(seconds)
@@ -54,29 +54,29 @@ class Main:
               ss = int(time % 60)
           if format == 'long':
               if hh == 1:
-                  str = '%d ' + self.__language__(90001) % hh
+                  timestr = ('%d ' + str(self.__language__(90001))) % hh
               if hh > 1:
-                  str = '%d ' + self.__language__(90002) % hh
+                  timestr = ('%d ' + str(self.__language__(90002))) % hh
               if mm > 0:
                   if mm == 1:
-                      str = str + (' %d ' +  self.__language__(90003) % mm)
+                      timestr = timestr + ((' %d ' + str(self.__language__(90003))) % mm)
                   else:
-                      str = str + (' %d ' +  self.__language__(90004) % mm)
+                      timestr = timestr + ((' %d ' + str(self.__language__(90004))) % mm)
               if hh == 0 and mm == 0:
-                  str = '0 ' +  self.__language__(90004)
+                  timestr = '0 ' + str(self.__language__(90004))
           if format == 'short':
               strm = ''
               if hh > 0:
-                  str = '%dh' % hh
+                  timestr = '%dh' % hh
                   strm = ' '
               if mm > 0:
-                  str = str + strm + ('%02dmin' % mm)
+                  timestr = timestr + strm + ('%02dmin' % mm)
               if hh == 0 and mm == 0:
-                  str = '0min'
+                  timestr = '0min'
         except:
-          str = '?'
+          timestr = '?'
   
-        return str
+        return timestr
 
     def _get_media( self, fullpath, file):
         # set default values
