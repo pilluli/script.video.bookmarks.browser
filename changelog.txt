@@ -1,0 +1,9 @@
+
+1.1:
+- Rename to script.video.bookmarks.browser
+- Use VideoBookmark.?.* for properties
+- Added option to use only type=1 (resume) bookmarks
+
+1.0:
+- Initial version
+
