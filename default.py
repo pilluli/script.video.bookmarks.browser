@@ -26,6 +26,7 @@
 
 import xbmc
 import xbmcgui
+import xbmcaddon
 from urllib import quote_plus, unquote_plus
 import re
 import sys
@@ -37,6 +38,9 @@ class Main:
     
     # grab the home window
     WINDOW = xbmcgui.Window( 10000 )
+
+    __settings__   = xbmcaddon.Addon(id='script.video.bookmarks.browser')
+    __language__   = __settings__.getLocalizedString
 
     def _seconds_to_string( self, seconds, tseconds, format ):
         str = ''
@@ -50,16 +54,16 @@ class Main:
               ss = int(time % 60)
           if format == 'long':
               if hh == 1:
-                  str = '%d hour' % hh
+                  str = '%d ' + self.__language__(90001) % hh
               if hh > 1:
-                  str = '%d hours' % hh
+                  str = '%d ' + self.__language__(90002) % hh
               if mm > 0:
                   if mm == 1:
-                      str = str + (' %d minute' % mm)
+                      str = str + (' %d ' +  self.__language__(90003) % mm)
                   else:
-                      str = str + (' %d minutes' % mm)
+                      str = str + (' %d ' +  self.__language__(90004) % mm)
               if hh == 0 and mm == 0:
-                  str = '0 minutes'
+                  str = '0 ' +  self.__language__(90004)
           if format == 'short':
               strm = ''
               if hh > 0:
@@ -101,8 +105,6 @@ class Main:
     
     def __init__( self ):
 
-        print '***JRH*** Executing script.video.bookmarks.browser string = ' + xbmc.getLocalizedString(90001)
-        
         # parse argv for any preferences
         self._parse_argv()
 
