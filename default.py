@@ -101,7 +101,7 @@ class Main:
     
     def __init__( self ):
 
-        print '***JRH*** Executing script.video.bookmarks.browser'
+        print '***JRH*** Executing script.video.bookmarks.browser string = ' + xbmc.getLocalizedString(90001)
         
         # parse argv for any preferences
         self._parse_argv()
