@@ -8,7 +8,7 @@ import time
     
 
 def log(txt):
-    message = 'script.watchlist: %s' % txt
+    message = 'script.video.bookmarks.browser: %s' % txt
     xbmc.log(msg=message, level=xbmc.LOGDEBUG)
 
 class Main:
@@ -75,9 +75,12 @@ class Main:
         return timestr
 
     def _fetch_movies( self ):
+        start = time.time()
         json_query = xbmc.executeJSONRPC('{"jsonrpc": "2.0", "method": "VideoLibrary.GetMovies", "params": {"properties": ["resume", "tagline", "fanart", "thumbnail", "file", "year", "rating", "plot", "playcount"]}, "id": 1}')
         json_response = simplejson.loads(json_query)
         if json_response['result'].has_key('movies'):
+            log('Time executing movie json query: ' + str(time.time() - start) + ' sec')
+            start = time.time()
             for item in json_response['result']['movies']:
                 if item['resume']['position'] > 0:
                     if item['playcount'] == 0:
@@ -93,11 +96,16 @@ class Main:
                         totaltime = item['resume']['total']
                         resumetime = item['resume']['position']
                         self.videos.append((resumetime, totaltime,   'movie',     label, tagline,        '',       year, fanart, thumbnail, path, rating))
+            log('Time executing movie parsing: ' + str(time.time() - start) + ' sec')
+
 
     def _fetch_episodes( self ):
+        start = time.time()
         json_query = xbmc.executeJSONRPC('{"jsonrpc": "2.0", "method": "VideoLibrary.GetEpisodes", "params": { "properties": ["resume", "playcount", "plot", "season", "episode", "showtitle", "firstaired", "thumbnail", "fanart", "file", "rating"]}, "id": 1}')
         json_response = simplejson.loads(json_query)
         if json_response['result'].has_key('episodes'):
+            log('Time executing episodes json query: ' + str(time.time() - start) + ' sec')
+            start = time.time()
             for item in json_response['result']['episodes']:
                 if item['resume']['position'] > 0:
                     if item['playcount'] == 0:
@@ -116,12 +124,21 @@ class Main:
                         totaltime = item['resume']['total']
                         resumetime = item['resume']['position']
                         self.videos.append((resumetime, totaltime, 'episode', showtitle,   title, episodeno, firstaired, fanart, thumbnail, path, rating))
+            log('Time executing episodes parsing: ' + str(time.time() - start) + ' sec')
 
     def _clear_properties( self ):
         for count in range( self.LIMIT ):
             count += 1
-            self.WINDOW.clearProperty( "VideoBookmark.%d.Type" % ( count ) )
             self.WINDOW.clearProperty( "VideoBookmark.%d.RemainingTime" % ( count ) )
+            self.WINDOW.clearProperty( "VideoBookmark.%d.Type" % ( count ) )
+            self.WINDOW.clearProperty( "VideoBookmark.%d.Title" % ( count ) )
+            self.WINDOW.clearProperty( "VideoBookmark.%d.Extra" % ( count ) )
+            self.WINDOW.clearProperty( "VideoBookmark.%d.EpisodeNo" % ( count ) )
+            self.WINDOW.clearProperty( "VideoBookmark.%d.Date" % ( count ) )
+            self.WINDOW.clearProperty( "VideoBookmark.%d.Fanart" % ( count ) )
+            self.WINDOW.clearProperty( "VideoBookmark.%d.Thumb" % ( count ) )
+            self.WINDOW.clearProperty( "VideoBookmark.%d.Path" % ( count ) )
+            self.WINDOW.clearProperty( "VideoBookmark.%d.Rating" % ( count ) )
 
     def _set_properties( self ):
         self.videos.sort(reverse=False)
