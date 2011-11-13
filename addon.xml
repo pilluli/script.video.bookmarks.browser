@@ -5,9 +5,12 @@
 	</requires>
 	<extension point="xbmc.python.library" library="default.py"/>
 	<extension point="xbmc.addon.metadata">
-		<summary>Video bookmarks browser script</summary>
-		<description>Fetches Video bookmarks form xbmc to populate your home screen.</description>
-		<disclaimer>Needs skin support for it to be used properly</disclaimer>
+		<summary lang="en">Video bookmarks browser script</summary>
+		<summary lang="nl">Video bladwijzer verkenner script</summary>
+		<description lang="en">Fetches Video bookmarks from xbmc to populate your home screen.</description>
+		<description lang="nl">Haalt video bladwijzers uit xbmc en geeft deze weer op het begin scherm.</description>
+		<disclaimer lang="en">Needs skin support for it to be used properly</disclaimer>
+		<disclaimer lang="nl">Skin ondersteuning benodigd voor juist gebruik van het script</disclaimer>
 		<platform>all</platform>
 	</extension>
 </addon>
