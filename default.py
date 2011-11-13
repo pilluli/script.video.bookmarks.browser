@@ -1,46 +1,41 @@
-# *  This Program is free software; you can redistribute it and/or modify
-# *  it under the terms of the GNU General Public License as published by
-# *  the Free Software Foundation; either version 2, or (at your option)
-# *  any later version.
-# *
-# *  This Program is distributed in the hope that it will be useful,
-# *  but WITHOUT ANY WARRANTY; without even the implied warranty of
-# *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# *  GNU General Public License for more details.
-# *
-# *  You should have received a copy of the GNU General Public License
-# *  along with XBMC; see the file COPYING.  If not, write to
-# *  the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
-# *  http://www.gnu.org/copyleft/gpl.html
-# *
-# *  this file was taken from http://xbmc-addons.googlecode.com/svn/packages/scripts/RecentlyAdded.py
-# *  and modified to be a XBMC Add-on under gpl2 license on 20. November 2010.
-# *
-# *  Thanks to:
-# *
-# *  Nuka for the original RecentlyAdded.py
-# *
-# *  ronie and Hitcher for the improvements made while in official repo
-# *  
-# *  Team XBMC
-
-import xbmc
-import xbmcgui
-import xbmcaddon
-from urllib import quote_plus, unquote_plus
+import xbmc, xbmcgui, xbmcaddon
+import simplejson
 import re
 import sys
 import os
 import random
 import time
     
+__addon__        = xbmcaddon.Addon(id='script.video.bookmarks.browser')
+__language__     = __addon__.getLocalizedString
+__addonversion__ = __addon__.getAddonInfo('version')
+__cwd__          = __addon__.getAddonInfo('path')
+
+def log(txt):
+    message = 'script.watchlist: %s' % txt
+    xbmc.log(msg=message, level=xbmc.LOGDEBUG)
+
 class Main:
     
-    # grab the home window
-    WINDOW = xbmcgui.Window( 10000 )
+    def __init__( self ):
+        self._init_vars()
+        self._fetch_movies()
+        self._fetch_tvshows()
+        self._fetch_episodes()
+        self._clear_properties()
+        self._set_properties()
 
-    __settings__   = xbmcaddon.Addon(id='script.video.bookmarks.browser')
-    __language__   = __settings__.getLocalizedString
+    def _init_vars( self ):
+        self.WINDOW = xbmcgui.Window( 10000 )
+        try:
+            # parse sys.argv for params
+            params = dict( arg.split( "=" ) for arg in sys.argv[ 1 ].split( "&" ) )
+        except:
+            # no params passed
+            params = {}
+        # set our preferences
+        self.LIMIT = self.LIMIT = int( params.get( "limit", "10" ) )
+        self.videos = []
 
     def _seconds_to_string( self, seconds, tseconds, format ):
         timestr = ''
@@ -78,52 +73,103 @@ class Main:
   
         return timestr
 
-    def _get_media( self, fullpath, file):
-        # set default values
-        play_path = fanart_path = thumb_path = fullpath
-        # we handle stack:// media special
-        if ( file.startswith( "stack://" ) ):
-            play_path = fanart_path = file
-            thumb_path = file[ 8 : ].split( " , " )[ 0 ]
-        # we handle rar:// and zip:// media special
-        if ( file.startswith( "rar://" ) or file.startswith( "zip://" ) ):
-            play_path = fanart_path = thumb_path = file
-        # return media info
-        return xbmc.getCacheThumbName( thumb_path ), xbmc.getCacheThumbName( fanart_path ), play_path
+    def _fetch_movies( self ):
+        json_query = xbmc.executeJSONRPC('{"jsonrpc": "2.0", "method": "VideoLibrary.GetMovies", "params": {"properties": ["resume", "genre", "studio", "tagline", "runtime", "fanart", "thumbnail", "file", "plot", "plotoutline", "year", "lastplayed", "rating"]}, "id": 1}')
+        json_response = simplejson.loads(json_query)
+        if json_response['result'].has_key('movies'):
+            for item in json_response['result']['movies']:
+                if item['resume']['position'] > 0:
+                    # this item has a resume point
+                    label = item['label']
+                    year = str(item['year'])
+                    genre = item['genre']
+                    studio = item['studio']
+                    plot = item['plot']
+                    plotoutline = item['plotoutline']
+                    tagline = item['tagline']
+                    runtime = item['runtime']
+                    fanart = item['fanart']
+                    thumbnail = item['thumbnail']
+                    path = item['file']
+                    rating = str(round(float(item['rating']),1))
+                    lastplayed = item['lastplayed']
+                    if not lastplayed == "":
+                        # catch exceptions where the item has been partially played, but playdate wasn't stored in the db
+                        datetime = strptime(lastplayed, "%Y-%m-%d %H:%M:%S")
+                        lastplayed = str(mktime(datetime))
+                    remainingtime = 9999999999.9
+                    try:
+                        remainingtime = float(item['resume']['total']) - float(item['resume']['position'])
+                    except:
+                        pass
 
-    def _parse_argv( self ):
-        try:
-            # parse sys.argv for params
-            params = dict( arg.split( "=" ) for arg in sys.argv[ 1 ].split( "&" ) )
-        except:
-            # no params passed
-            params = {}
-        # set our preferences
-        self.LIMIT = int( params.get( "limit", "10" ) )
-        self.UNIQUE = int( params.get( "unique", "0" ) )
-        self.RESUME = int( params.get( "resume", "0" ) )
-    
-    def __init__( self ):
+                    self.videos.append((remainingtime, 'movie', lastplayed, label, year, genre, studio, plot, plotoutline, tagline, runtime, fanart, thumbnail, path, rating))
 
-        # parse argv for any preferences
-        self._parse_argv()
 
-	# If XBMC is updating the library something bad happens :-?
-	time.sleep(1)
 
-        # format our records start and end
-        xbmc.executehttpapi( "SetResponseFormat()" )
-        xbmc.executehttpapi( "SetResponseFormat(OpenRecord,%s)" % ( "<record>", ) )
-        xbmc.executehttpapi( "SetResponseFormat(CloseRecord,%s)" % ( "</record>", ) )
-        # check if we were executed internally
+    def _fetch_episodes( self ):
+        for tvshow in self.tvshows:
+            lastplayed = ""
+            json_query = xbmc.executeJSONRPC('{"jsonrpc": "2.0", "method": "VideoLibrary.GetEpisodes", "params": { "properties": ["resume","playcount", "plot", "season", "episode", "showtitle", "thumbnail", "fanart", "file", "lastplayed", "rating"], "sort": { "method": "episode" }, "tvshowid":%s }, "id": 1}' % tvshow[0])
+        json_query = xbmc.executeJSONRPC('{"jsonrpc": "2.0", "method": "VideoLibrary.GetMovies", "params": {"properties": ["resume", "genre", "studio", "tagline", "runtime", "fanart", "thumbnail", "file", "plot", "plotoutline", "year", "lastplayed", "rating"]}, "id": 1}')
+            json_response = simplejson.loads(json_query)
+            if json_response['result'].has_key('episodes'):
+                for item in json_response['result']['episodes']:
+                    playcount = item['playcount']
+                    if playcount != 0:
+                        # this item has been watched, record play date (we need it for sorting the final list) and continue to next item
+                        lastplayed = item['lastplayed']
+                        if not lastplayed == "":
+                            # catch exceptions where the item has been played, but playdate wasn't stored in the db
+                            datetime = strptime(lastplayed, "%Y-%m-%d %H:%M:%S")
+                            lastplayed = str(mktime(datetime))
+                        continue
+                    else:
+                        # this is the first unwatched item, check if it's partially watched
+                        playdate = item['lastplayed']
+                        if (lastplayed == "") and (playdate == ""):
+                            # it's a tv show with 0 watched episodes, continue to the next tv show
+                            break
+                        else:
+                            # this is the episode we need
+                            label = item['label']
+                            fanart = item['fanart']
+                            episode = "%.2d" % float(item['episode'])
+                            path = item['file']
+                            plot = item['plot']
+                            season = "%.2d" % float(item['season'])
+                            thumbnail = item['thumbnail']
+                            showtitle = item['showtitle']
+                            rating = str(round(float(item['rating']),1))
+                            episodeno = "s%se%s" % ( season,  episode, )
+                            if not playdate == "":
+                                # if the episode is partially watched, use it's playdate for sorting
+                                datetime = strptime(playdate, "%Y-%m-%d %H:%M:%S")
+                                lastplayed = str(mktime(datetime))
+                                resumable = "True"
+                                log('### episode "' + showtitle + ' - ' + label + '" partially watched')
+                            else:
+                                resumable = "False"
+                            showthumb = tvshow[1]
+                            studio = tvshow[2]
+                            seasonthumb = self._fetch_seasonthumb(tvshow[0], season)
+                            if item['resume']['position'] > 0:
+                                pass
+                            else:
+                                self.episodes.append((lastplayed, label, episode, season, plot, showtitle, path, thumbnail, fanart, episodeno, studio, showthumb, seasonthumb, resumable, rating))
+                                # we have found our episode, collected all data, so continue to next tv show
+                                break
+        self.episodes.sort(reverse=True)
+        log("episode list: %s items" % len(self.episodes))
 
-        # clear properties
-        #self._clear_properties()
-        
-        # set any alarm
-        #self._set_alarm()
-        
-        self._fetch_unfinished_videos_info()
+
+
+    def _clear_properties( self ):
+        for count in range( self.LIMIT ):
+            count += 1
+            self.WINDOW.clearProperty( "VideoBookMark.%d.Type" % ( count ) )
+            self.WINDOW.clearProperty( "VideoBookMark.%d.Title" % ( count ) )
+            self.WINDOW.clearProperty( "VideoBookMark.%d.RemainingTime" % ( count ) )
 
 
     def _fetch_unfinished_videos_info( self ):
