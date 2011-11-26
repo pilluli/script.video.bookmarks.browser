@@ -95,9 +95,22 @@ class Main:
                         rating = str(round(float(item['rating']),1))
                         totaltime = item['resume']['total']
                         resumetime = item['resume']['position']
-                        self.videos.append((resumetime, totaltime,   'movie',     label, tagline,        '',       year, fanart, thumbnail, path, rating))
+                        self.videos.append((resumetime, totaltime,   'movie',     label, tagline,        '',       '', year, fanart, thumbnail, path, rating))
             log('Time executing movie parsing: ' + str(time.time() - start) + ' sec')
 
+
+    def _check_duplicated_episode( self, path, season, episode ):
+      ret = True
+      for i,v in enumerate(self.videos):
+        if v[10] == path:
+          # Check if episode is later
+          ranking_old = int(v[5])*100 + int(v[6])
+          ranking_new = int(season)*100 + int(episode)
+          if ranking_new > ranking_old:
+              self.videos.pop(i)
+          else:
+              ret = False
+      return ret
 
     def _fetch_episodes( self ):
         start = time.time()
@@ -120,10 +133,10 @@ class Main:
                         firstaired = item['firstaired']
                         rating = str(round(float(item['rating']),1))
                         title = "S%sE%s - %s" % ( season,  episode, label)
-                        episodeno = "S%sE%s" % ( season,  episode)
                         totaltime = item['resume']['total']
                         resumetime = item['resume']['position']
-                        self.videos.append((resumetime, totaltime, 'episode', showtitle,   title, episodeno, firstaired, fanart, thumbnail, path, rating))
+                        if self._check_duplicated_episode(path,season,episode):
+                            self.videos.append((resumetime, totaltime, 'episode', showtitle,   title, season, episode, firstaired, fanart, thumbnail, path, rating))
             log('Time executing episodes parsing: ' + str(time.time() - start) + ' sec')
 
     def _clear_properties( self ):
@@ -151,12 +164,12 @@ class Main:
             self.WINDOW.setProperty( "VideoBookmark.%d.Type" % ( count ), v[2] )
             self.WINDOW.setProperty( "VideoBookmark.%d.Title" % ( count ), v[3] )
             self.WINDOW.setProperty( "VideoBookmark.%d.Extra" % ( count ), v[4] )
-            self.WINDOW.setProperty( "VideoBookmark.%d.EpisodeNo" % ( count ), v[5] )
-            self.WINDOW.setProperty( "VideoBookmark.%d.Date" % ( count ), v[6] )
-            self.WINDOW.setProperty( "VideoBookmark.%d.Fanart" % ( count ), v[7] )
-            self.WINDOW.setProperty( "VideoBookmark.%d.Thumb" % ( count ), v[8] )
-            self.WINDOW.setProperty( "VideoBookmark.%d.Path" % ( count ), v[9] )
-            self.WINDOW.setProperty( "VideoBookmark.%d.Rating" % ( count ), v[10] )
+            self.WINDOW.setProperty( "VideoBookmark.%d.EpisodeNo" % ( count ), "S%sE%s" % (v[5],v[6]) )
+            self.WINDOW.setProperty( "VideoBookmark.%d.Date" % ( count ), v[7] )
+            self.WINDOW.setProperty( "VideoBookmark.%d.Fanart" % ( count ), v[8] )
+            self.WINDOW.setProperty( "VideoBookmark.%d.Thumb" % ( count ), v[9] )
+            self.WINDOW.setProperty( "VideoBookmark.%d.Path" % ( count ), v[10] )
+            self.WINDOW.setProperty( "VideoBookmark.%d.Rating" % ( count ), v[11] )
             if count == self.LIMIT:
                 break
 
