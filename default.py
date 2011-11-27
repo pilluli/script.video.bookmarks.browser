@@ -154,11 +154,11 @@ class Main:
             self.WINDOW.clearProperty( "VideoBookmark.%d.Rating" % ( count ) )
 
     def _set_properties( self ):
-        self.videos.sort(reverse=False)
+        self.videos.sort(reverse=True)
         for count, v in enumerate( self.videos ):
             count += 1
-            #self.videos.append((resumetime, totaltime, 'episode', showtitle,   title, episodeno, firstaired, fanart, thumbnail, path, rating))
-            #self.videos.append((resumetime, totaltime,   'movie',     label, tagline,        '',       year, fanart, thumbnail, path, rating))
+            #self.videos.append((resumetime, totaltime,   'movie',     label, tagline,     '',      '',       year, fanart, thumbnail, path, rating))
+            #self.videos.append((resumetime, totaltime, 'episode', showtitle,   title, season, episode, firstaired, fanart, thumbnail, path, rating))
             log('Adding video with bookmarkk = "' + v[3] + '" ' + str(v[0]) + ' - ' + str(v[1]))
             self.WINDOW.setProperty( "VideoBookmark.%d.RemainingTime" % ( count ), self._seconds_to_string(v[0],v[1],'long') )
             self.WINDOW.setProperty( "VideoBookmark.%d.Type" % ( count ), v[2] )
