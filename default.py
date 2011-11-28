@@ -95,7 +95,7 @@ class Main:
                         rating = str(round(float(item['rating']),1))
                         totaltime = item['resume']['total']
                         resumetime = item['resume']['position']
-                        self.videos.append((resumetime, totaltime,   'movie',     label, tagline,        '',       '', year, fanart, thumbnail, path, rating))
+                        self.videos.append((resumetime, totaltime,   'movie',     label, tagline,        '',       '', year, fanart, thumbnail, path, rating, totaltime-resumetime))
             log('Time executing movie parsing: ' + str(time.time() - start) + ' sec')
 
 
@@ -136,7 +136,7 @@ class Main:
                         totaltime = item['resume']['total']
                         resumetime = item['resume']['position']
                         if self._check_duplicated_episode(path,season,episode):
-                            self.videos.append((resumetime, totaltime, 'episode', showtitle,   title, season, episode, firstaired, fanart, thumbnail, path, rating))
+                            self.videos.append((resumetime, totaltime, 'episode', showtitle,   title, season, episode, firstaired, fanart, thumbnail, path, rating, totaltime-resumetime))
             log('Time executing episodes parsing: ' + str(time.time() - start) + ' sec')
 
     def _clear_properties( self ):
@@ -154,12 +154,13 @@ class Main:
             self.WINDOW.clearProperty( "VideoBookmark.%d.Rating" % ( count ) )
 
     def _set_properties( self ):
-        self.videos.sort(reverse=True)
+        from operator import itemgetter, attrgetter
+        self.videos.sort(key=itemgetter(12))
         for count, v in enumerate( self.videos ):
             count += 1
             #self.videos.append((resumetime, totaltime,   'movie',     label, tagline,     '',      '',       year, fanart, thumbnail, path, rating))
             #self.videos.append((resumetime, totaltime, 'episode', showtitle,   title, season, episode, firstaired, fanart, thumbnail, path, rating))
-            log('Adding video with bookmarkk = "' + v[3] + '" ' + str(v[0]) + ' - ' + str(v[1]))
+            log('Adding video with bookmark = "' + v[3] + '" ' + str(v[0]) + ' - ' + str(v[1]))
             self.WINDOW.setProperty( "VideoBookmark.%d.RemainingTime" % ( count ), self._seconds_to_string(v[0],v[1],'long') )
             self.WINDOW.setProperty( "VideoBookmark.%d.Type" % ( count ), v[2] )
             self.WINDOW.setProperty( "VideoBookmark.%d.Title" % ( count ), v[3] )
