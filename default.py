@@ -49,9 +49,7 @@ class Main:
               ss = int(time % 60)
           if format == 'long':
               if hh == 1:
-                  log('bookmarkk here1')
                   timestr = ('%d ' + str(self.__language__(90001))) % hh
-                  log('bookmarkk here2')
               if hh > 1:
                   timestr = ('%d ' + str(self.__language__(90002))) % hh
               if mm > 0:
@@ -61,6 +59,7 @@ class Main:
                       timestr = timestr + ((' %d ' + str(self.__language__(90004))) % mm)
               if hh == 0 and mm == 0:
                   timestr = '0 ' + str(self.__language__(90004))
+              timestr = timestr + ' ' + str(self.__language__(90005))
           if format == 'short':
               strm = ''
               if hh > 0:
