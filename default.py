@@ -9,7 +9,7 @@ import time
 
 def log(txt):
     message = 'script.video.bookmarks.browser: %s' % txt
-    xbmc.log(msg=message, level=xbmc.LOGDEBUG)
+    #xbmc.log(msg=message, level=xbmc.LOGDEBUG)
 
 class Main:
     
@@ -116,7 +116,7 @@ class Main:
     def _fetch_episodes( self ):
       if self.VIDEOCATEGORY=='episodes' or self.VIDEOCATEGORY=='both' or self.VIDEOCATEGORY=='bothseparated':
         start = time.time()
-        json_query = xbmc.executeJSONRPC('{"jsonrpc": "2.0", "method": "VideoLibrary.GetEpisodes", "params": { "properties": ["resume", "playcount", "plot", "season", "episode", "showtitle", "firstaired", "thumbnail", "fanart", "file", "rating"]}, "id": 1}')
+        json_query = xbmc.executeJSONRPC('{"jsonrpc": "2.0", "method": "VideoLibrary.GetEpisodes", "params": { "properties": ["title","resume", "playcount", "plot", "season", "episode", "showtitle", "firstaired", "thumbnail", "fanart", "file", "rating"]}, "id": 1}')
         json_response = simplejson.loads(json_query)
         if json_response['result'].has_key('episodes'):
             log('Time executing episodes json query: ' + str(time.time() - start) + ' sec')
@@ -125,7 +125,7 @@ class Main:
                 if item['resume']['position'] > 0:
                     if item['playcount'] == 0:
                         # this is the episode we need
-                        label = item['label']
+                        label = item['title']
                         fanart = item['fanart']
                         episode = "%.2d" % float(item['episode'])
                         path = item['file']
